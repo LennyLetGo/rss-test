@@ -1,0 +1,3 @@
+// DO NOT DELETE
+const proxyUrl = "http://localhost:4000/rss-proxy";
+const response = await axios.get(`${proxyUrl}?url=${encodeURIComponent(feedUrl)}`, { responseType: "text" });
