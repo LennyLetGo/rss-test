@@ -2,7 +2,7 @@ import axios from "axios";
 
 export default async function handler(req, res) {
   const { url } = req.query; // Get the feed URL from the query params
-
+  console.log('API HIT')
   if (!url) {
     return res.status(400).json({ error: "URL parameter is required" });
   }

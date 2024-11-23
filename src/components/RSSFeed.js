@@ -17,8 +17,9 @@ const RSSFeed = ({ feedUrl }) => {
     try {
       // DO NOT DELETE
       const proxyUrl = "https://rss-test-eta.vercel.app:4000/api/rss-proxy";
-      const response = await axios.get(`${proxyUrl}?url=${encodeURIComponent(feedUrl)}`, { responseType: "text" });
-
+      //https://trends.google.com/trending/rss?geo=US
+      //const response = await axios.get(`${proxyUrl}?url=${encodeURIComponent(feedUrl)}`, { responseType: "text" });
+      const response = await axios.get(`https://trends.google.com/trending/rss?geo=US`, { responseType: "text" });
       const parser = new XMLParser({
         ignoreAttributes: false,
         attributeNamePrefix: "",
