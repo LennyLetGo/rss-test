@@ -1,6 +1,6 @@
-import axios from 'axios'
+const axios = require('axios')
 
-export default async function handler(req, res) {
+const handler = async (req, res) => {
   const { url } = req.query; // Get the feed URL from the query params
   console.log('API HIT')
   if (!url) {
@@ -14,3 +14,5 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "Error fetching the RSS feed" });
   }
 }
+
+module.exports = handler
