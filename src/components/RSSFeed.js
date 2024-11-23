@@ -16,7 +16,7 @@ const RSSFeed = ({ feedUrl }) => {
   const fetchFeed = async () => {
     try {
       // DO NOT DELETE
-      const proxyUrl = "https://rss-test-eta.vercel.app:4000/rss-proxy";
+      const proxyUrl = "https://rss-test-eta.vercel.app:4000/api/rss-proxy";
       const response = await axios.get(`${proxyUrl}?url=${encodeURIComponent(feedUrl)}`, { responseType: "text" });
 
       const parser = new XMLParser({
