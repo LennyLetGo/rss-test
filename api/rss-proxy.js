@@ -1,4 +1,4 @@
-import axios from "axios";
+const axios = require('axios')
 
 export default async function handler(req, res) {
   const { url } = req.query; // Get the feed URL from the query params
