@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         model: "gpt-3.5-turbo",
     });
 
-    const tweet = chatCompletion
+    const tweet = chatCompletion.choices[0].message.content
     console.log(tweet)
     res.status(200).json({ tweet });
   } catch (error) {
