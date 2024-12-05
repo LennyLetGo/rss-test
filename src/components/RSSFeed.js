@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -15,11 +15,9 @@ const RSSFeed = ({ feedUrl }) => {
   const [loadingTweet, setLoadingTweet] = useState(false);
 
   // OpenAI Configuration
-  const openai = new OpenAIApi(
-    new Configuration({
-      apiKey: process.env.OPEN_AI_KEY, // Store this in .env
-    })
-  );
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
 
   const fetchFeed = async () => {
     try {
