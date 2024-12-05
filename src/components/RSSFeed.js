@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
-import OpenAI from "openai";
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -12,12 +11,7 @@ const RSSFeed = ({ feedUrl }) => {
   const [blueSkyData, setBlueSkyData] = useState({});
   const [expandedCard, setExpandedCard] = useState(null);
   const [generatedTweet, setGeneratedTweet] = useState({}); // Store generated tweets
-  const [loadingTweet, setLoadingTweet] = useState(false);
-
-  // OpenAI Configuration
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+  const [loadingTweet, setLoadingTweet] = useState(null); // Track loading state for each card
 
   const fetchFeed = async () => {
     try {
@@ -74,25 +68,15 @@ const RSSFeed = ({ feedUrl }) => {
   };
 
   const generateTweet = async (titles, index) => {
+    setLoadingTweet(index);
     try {
-      setLoadingTweet(true);
-
-      const prompt = `
-        Generate a concise and engaging tweet using the following news article titles:
-        ${titles.join(", ")}.
-        The tweet should summarize the theme in a compelling way and fit within 280 characters.
-      `;
-      const chatCompletion = await openai.chat.completions.create({
-        messages: [{ role: "user", content: prompt }],
-        model: "text-davinci-003",
-    });
-
-      const tweet = chatCompletion.data.choices[0].text.trim();
+      const response = await axios.post("/api/generate-tweet", { titles });
+      const tweet = response.data.tweet;
       setGeneratedTweet((prev) => ({ ...prev, [index]: tweet }));
     } catch (error) {
       console.error("Error generating tweet:", error);
     } finally {
-      setLoadingTweet(false);
+      setLoadingTweet(null);
     }
   };
 
@@ -140,8 +124,12 @@ const RSSFeed = ({ feedUrl }) => {
             <h3 style={styles.title}>{item.title}</h3>
             <p style={styles.date}>Published on: {publishDate}</p>
 
-            <button onClick={() => generateTweet(newsTitles, index)} style={styles.button}>
-              {loadingTweet ? "Generating..." : "Generate Tweet"}
+            <button
+              onClick={() => generateTweet(newsTitles, index)}
+              style={styles.button}
+              disabled={loadingTweet === index}
+            >
+              {loadingTweet === index ? "Generating..." : "Generate Tweet"}
             </button>
 
             {tweetText && (
