@@ -82,14 +82,12 @@ const RSSFeed = ({ feedUrl }) => {
         ${titles.join(", ")}.
         The tweet should summarize the theme in a compelling way and fit within 280 characters.
       `;
-
-      const response = await openai.createCompletion({
+      const chatCompletion = await openai.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
         model: "text-davinci-003",
-        prompt,
-        max_tokens: 100,
-      });
+    });
 
-      const tweet = response.data.choices[0].text.trim();
+      const tweet = chatCompletion.data.choices[0].text.trim();
       setGeneratedTweet((prev) => ({ ...prev, [index]: tweet }));
     } catch (error) {
       console.error("Error generating tweet:", error);
