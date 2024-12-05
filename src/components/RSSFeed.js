@@ -70,7 +70,7 @@ const RSSFeed = ({ feedUrl }) => {
   const generateTweet = async (titles, index) => {
     setLoadingTweet(index);
     try {
-      const response = await axios.post("/api/generate-tweet", { titles });
+      const response = await axios.post("https://rss-test-eta.vercel.app/api/generate-tweet", { titles });
       const tweet = response.data.tweet;
       setGeneratedTweet((prev) => ({ ...prev, [index]: tweet }));
     } catch (error) {
