@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     `;
     const chatCompletion = await openai.chat.completions.create({
         messages: [{ role: "user", content: prompt}],
-        model: "text-davinci-003",
+        model: "gpt-3.5-turbo",
     });
 
     const tweet = chatCompletion.data.choices[0].text.trim();
