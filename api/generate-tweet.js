@@ -1,6 +1,6 @@
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 
-const openai = new OpenAIApi({
+const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY, // Use your server-side environment variable
 });
 

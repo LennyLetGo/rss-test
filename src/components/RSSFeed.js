@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
 
+// Delay function to pause between requests
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const RSSFeed = ({ feedUrl }) => {
@@ -9,14 +10,18 @@ const RSSFeed = ({ feedUrl }) => {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [blueSkyData, setBlueSkyData] = useState({});
-  const [expandedCard, setExpandedCard] = useState(null);
+  const [expandedCard, setExpandedCard] = useState(null); // Track expanded card for dropdown
   const [generatedTweet, setGeneratedTweet] = useState({}); // Store generated tweets
   const [loadingTweet, setLoadingTweet] = useState(null); // Track loading state for each card
 
+  // Fetch the RSS feed data
   const fetchFeed = async () => {
     try {
       const proxyUrl = "https://rss-test-eta.vercel.app/api/rss-proxy";
-      const response = await axios.get(`${proxyUrl}?url=${encodeURIComponent(feedUrl)}`, { responseType: "text" });
+      const response = await axios.get(
+        `${proxyUrl}?url=${encodeURIComponent(feedUrl)}`,
+        { responseType: "text" }
+      );
 
       const parser = new XMLParser({
         ignoreAttributes: false,
@@ -25,7 +30,7 @@ const RSSFeed = ({ feedUrl }) => {
       const json = parser.parse(response.data);
 
       const items = json.rss.channel.item;
-      const formattedItems = Array.isArray(items) ? items : [items];
+      const formattedItems = Array.isArray(items) ? items : [items]; // Ensure items are an array
 
       formattedItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
@@ -38,11 +43,17 @@ const RSSFeed = ({ feedUrl }) => {
     }
   };
 
+  // Fetch Blue Sky data for a specific title
   const fetchBlueSkyData = async (title) => {
     try {
       const response = await axios.get(
-        `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts`,
-        { params: { q: title, sort: "latest" } }
+        "https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts",
+        {
+          params: {
+            q: title,
+            sort: "latest",
+          },
+        }
       );
       const posts = response.data?.posts || [];
       const totals = posts.reduce(
@@ -56,21 +67,39 @@ const RSSFeed = ({ feedUrl }) => {
       );
 
       const oldestPostDate = posts.reduce((oldest, post) => {
-        const postDate = new Date(post.indexedAt);
-        return !oldest || postDate < oldest ? post.indexedAt : oldest;
+        const postDateStr = post.indexedAt;
+        const postDate = new Date(postDateStr); // Convert to Date object
+        if (!oldest || postDate < oldest) {
+          return postDateStr;
+        }
+        return postDateStr;
       }, null);
 
-      return { totals, oldestPostDate, posts };
+      return { totals, oldestPostDate, posts }; // Return actual posts
     } catch (error) {
       console.error("Error fetching Blue Sky data:", error);
       return { totals: { likes: 0, reposts: 0, replies: 0 }, oldestPostDate: null, posts: [] };
     }
   };
 
+  // Format date manually
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `${month}-${day}-${year} ${hours}:${minutes}:${seconds}`;
+  };
+
+  // Generate a tweet on the server side
   const generateTweet = async (titles, index) => {
     setLoadingTweet(index);
     try {
-      const response = await axios.post("https://rss-test-eta.vercel.app/api/generate-tweet", { titles });
+      const response = await axios.post("/api/generate-tweet", { titles });
       const tweet = response.data.tweet;
       setGeneratedTweet((prev) => ({ ...prev, [index]: tweet }));
     } catch (error) {
@@ -82,25 +111,30 @@ const RSSFeed = ({ feedUrl }) => {
 
   useEffect(() => {
     fetchFeed();
+
+    // Set interval to refresh the feed every minute
     const intervalId = setInterval(fetchFeed, 60000);
-    return () => clearInterval(intervalId);
+    return () => clearInterval(intervalId); // Cleanup on component unmount
   }, [feedUrl]);
 
   useEffect(() => {
+    // Fetch Blue Sky data for each feed item sequentially with a delay
     const fetchDataForFeedItems = async () => {
       const dataObj = {};
+
       for (const item of feedItems) {
         const { totals, oldestPostDate, posts } = await fetchBlueSkyData(item.title);
         dataObj[item.title] = { totals, oldestPostDate, posts };
         await delay(1000);
       }
+
       setBlueSkyData(dataObj);
     };
 
     if (feedItems.length > 0) {
       fetchDataForFeedItems();
     }
-  }, [feedItems]);
+  }, [feedItems]); // Trigger when feedItems are updated
 
   if (loading) return <div>Loading...</div>;
 
@@ -118,6 +152,12 @@ const RSSFeed = ({ feedUrl }) => {
         const publishDate = new Date(item.pubDate).toLocaleString();
         const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title)}`;
         const tweetText = generatedTweet[index] || "";
+
+        const blueSkyDataForCard = blueSkyData[item.title] || {
+          totals: { likes: 0, reposts: 0, replies: 0 },
+          oldestPostDate: null,
+          posts: [],
+        };
 
         return (
           <div key={index} style={styles.card}>
@@ -137,6 +177,22 @@ const RSSFeed = ({ feedUrl }) => {
                 <textarea style={styles.textarea} value={tweetText} readOnly />
               </div>
             )}
+
+            <hr />
+            <div style={styles.blueSkyRating}>
+              <h4>Blue Sky Rating</h4>
+              <div style={styles.statsRow}>
+                <div style={styles.statItem}>
+                  <strong>Total Likes:</strong> {blueSkyDataForCard.totals.likes}
+                </div>
+                <div style={styles.statItem}>
+                  <strong>Total Reposts:</strong> {blueSkyDataForCard.totals.reposts}
+                </div>
+                <div style={styles.statItem}>
+                  <strong>Total Replies:</strong> {blueSkyDataForCard.totals.replies}
+                </div>
+              </div>
+            </div>
           </div>
         );
       })}
@@ -152,6 +208,8 @@ const styles = {
   button: { marginTop: "10px", padding: "8px 16px", cursor: "pointer" },
   dropdown: { marginTop: "10px" },
   textarea: { width: "100%", height: "100px", resize: "none" },
+  statsRow: { display: "flex", gap: "10px", marginTop: "10px" },
+  statItem: { fontSize: "1rem" },
 };
 
 export default RSSFeed;
