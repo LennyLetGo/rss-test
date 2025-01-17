@@ -4,6 +4,10 @@
       {
         "src": "/api/rss-proxy",
         "dest": "/api/rss-proxy.js"
+      },
+      {
+        "src": "/api/generate-tweet",
+        "dest": "/api/generate-tweet.js"
       }
     ]
   }
